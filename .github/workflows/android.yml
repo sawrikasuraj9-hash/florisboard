@@ -1,4 +1,4 @@
-name: FlorisBoard CI
+name: softBoard CI
 
 on:
   push:
