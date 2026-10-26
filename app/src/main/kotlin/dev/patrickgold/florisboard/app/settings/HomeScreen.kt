@@ -1,20 +1,9 @@
 
 /*
-
-- Copyright (C) 2021-2025 The FlorisBoard Contributors
-- 
-- Licensed under the Apache License, Version 2.0 (the "License");
-- you may not use this file except in compliance with the License.
-- You may obtain a copy of the License at
-- 
-- http://www.apache.org/licenses/LICENSE-2.0
-- 
-- Unless required by applicable law or agreed to in writing, software
-- distributed under the License is distributed on an "AS IS" BASIS,
-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-- See the License for the specific language governing permissions and
-- limitations under the License.
-  */
+ * Copyright (C) 2021-2025 The FlorisBoard Contributors
+ *
+ * Licensed under the Apache License, Version 2.0.
+ */
 
 package dev.patrickgold.florisboard.app.settings
 
@@ -29,7 +18,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Assignment
@@ -53,10 +41,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.platform.LocalContext
 import dev.patrickgold.florisboard.R
 import dev.patrickgold.florisboard.app.LocalNavController
 import dev.patrickgold.florisboard.app.Routes
@@ -117,7 +105,7 @@ fun HomeScreen() = FlorisScreen {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "♛  SoftBoard",
+                    text = "♛ SoftBoard",
                     fontSize = 32.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = NeonPink
@@ -128,14 +116,14 @@ fun HomeScreen() = FlorisScreen {
                     fontWeight = FontWeight.SemiBold,
                     color = Color.White
                 )
-                Spacer(modifier = Modifier.size(6.dp))
+                Spacer(Modifier.size(6.dp))
                 Text(
                     text = "TYPE  •  CREATE  •  EXPRESS",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     color = SoftText
                 )
-                Spacer(modifier = Modifier.size(10.dp))
+                Spacer(Modifier.size(10.dp))
                 Text(
                     text = "Your Keyboard, Your Style ✨",
                     fontSize = 15.sp,
@@ -155,7 +143,7 @@ fun HomeScreen() = FlorisScreen {
             } else if (!isSelected) {
                 SoftBoardBanner(
                     title = "Select SoftBoard",
-                    subtitle = "Tap here to make SoftBoard your keyboard",
+                    subtitle = "Tap here to make it your keyboard",
                     onClick = {
                         InputMethodUtils.showImePicker(context)
                     }
@@ -167,16 +155,18 @@ fun HomeScreen() = FlorisScreen {
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
                 color = NeonPink,
-                modifier = Modifier.padding(start = 4.dp, top = 4.dp)
+                modifier = Modifier.padding(
+                    start = 4.dp,
+                    top = 4.dp
+                )
             )
 
-            // Languages + Theme
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 SoftBoardTile(
                     modifier = Modifier.weight(1f),
                     icon = Icons.Default.Language,
                     title = "Languages",
-                    subtitle = "Language and input method",
+                    subtitle = "Language and layouts",
                     accent = NeonPurple,
                     onClick = {
                         navController.navigate(Routes.Settings.Localization)
@@ -194,13 +184,12 @@ fun HomeScreen() = FlorisScreen {
                 )
             }
 
-            // Keyboard + Smartbar
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 SoftBoardTile(
                     modifier = Modifier.weight(1f),
                     icon = Icons.Outlined.Keyboard,
                     title = "Keyboard",
-                    subtitle = "Keys, height and layout",
+                    subtitle = "Keys and layout",
                     accent = NeonBlue,
                     onClick = {
                         navController.navigate(Routes.Settings.Keyboard)
@@ -218,7 +207,6 @@ fun HomeScreen() = FlorisScreen {
                 )
             }
 
-            // Typing + Gestures
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 SoftBoardTile(
                     modifier = Modifier.weight(1f),
@@ -242,13 +230,12 @@ fun HomeScreen() = FlorisScreen {
                 )
             }
 
-            // Clipboard + Emoji
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 SoftBoardTile(
                     modifier = Modifier.weight(1f),
                     icon = Icons.AutoMirrored.Outlined.Assignment,
                     title = "Clipboard",
-                    subtitle = "Your copied items",
+                    subtitle = "Copied items",
                     accent = Color(0xFFFF884D),
                     onClick = {
                         navController.navigate(Routes.Settings.Clipboard)
@@ -266,7 +253,6 @@ fun HomeScreen() = FlorisScreen {
                 )
             }
 
-            // Add-ons + Other
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 SoftBoardTile(
                     modifier = Modifier.weight(1f),
@@ -290,7 +276,6 @@ fun HomeScreen() = FlorisScreen {
                 )
             }
 
-            // About
             SoftBoardTile(
                 modifier = Modifier.fillMaxWidth(),
                 icon = Icons.Outlined.Info,
@@ -302,7 +287,7 @@ fun HomeScreen() = FlorisScreen {
                 }
             )
 
-            Spacer(modifier = Modifier.size(8.dp))
+            Spacer(Modifier.size(8.dp))
         }
     }
 }
@@ -319,19 +304,29 @@ private fun SoftBoardBanner(
             .clip(RoundedCornerShape(20.dp))
             .background(
                 Brush.horizontalGradient(
-                    listOf(Color(0xFF260A50), Color(0xFF120B30))
+                    listOf(
+                        Color(0xFF260A50),
+                        Color(0xFF120B30)
+                    )
                 )
             )
             .border(
                 1.dp,
-                Brush.horizontalGradient(listOf(NeonPink, NeonPurple)),
+                Brush.horizontalGradient(
+                    listOf(NeonPink, NeonPurple)
+                ),
                 RoundedCornerShape(20.dp)
             )
             .clickable(onClick = onClick)
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = "♛", fontSize = 30.sp, color = NeonPink)
+        Text(
+            text = "♛",
+            fontSize = 30.sp,
+            color = NeonPink
+        )
+
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -349,7 +344,12 @@ private fun SoftBoardBanner(
                 fontSize = 12.sp
             )
         }
-        Text(text = "›", color = NeonPink, fontSize = 32.sp)
+
+        Text(
+            text = "›",
+            color = NeonPink,
+            fontSize = 32.sp
+        )
     }
 }
 
@@ -379,7 +379,10 @@ private fun SoftBoardTile(
             .border(
                 1.dp,
                 Brush.horizontalGradient(
-                    listOf(accent.copy(alpha = 0.9f), NeonPurple.copy(alpha = 0.65f))
+                    listOf(
+                        accent.copy(alpha = 0.9f),
+                        NeonPurple.copy(alpha = 0.65f)
+                    )
                 ),
                 shape
             )
@@ -393,7 +396,10 @@ private fun SoftBoardTile(
                 .clip(RoundedCornerShape(16.dp))
                 .background(
                     Brush.linearGradient(
-                        listOf(accent, accent.copy(alpha = 0.48f))
+                        listOf(
+                            accent,
+                            accent.copy(alpha = 0.48f)
+                        )
                     )
                 )
                 .border(
@@ -422,7 +428,7 @@ private fun SoftBoardTile(
                 fontWeight = FontWeight.Bold,
                 color = Color.White
             )
-            Spacer(modifier = Modifier.size(4.dp))
+            Spacer(Modifier.size(4.dp))
             Text(
                 text = subtitle,
                 fontSize = 10.sp,
