@@ -7,9 +7,22 @@
 
 package dev.patrickgold.florisboard.app.settings
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,12 +48,17 @@ import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -52,15 +70,16 @@ import dev.patrickgold.florisboard.app.Routes
 import dev.patrickgold.florisboard.lib.compose.FlorisScreen
 import dev.patrickgold.florisboard.lib.util.InputMethodUtils
 import org.florisboard.lib.compose.stringRes
+import kotlinx.coroutines.delay
 
-private val BackgroundTop = Color(0xFF100B1B)
-private val BackgroundBottom = Color(0xFF08070D)
-private val CardBackground = Color(0xFF171321)
-private val AccentPurple = Color(0xFFB58AFF)
-private val AccentPink = Color(0xFFFF82C8)
-private val PrimaryText = Color(0xFFF7F2FF)
-private val SecondaryText = Color(0xFFAAA2BC)
-private val SubtleBorder = Color(0xFF30283D)
+private val BackgroundTop = Color(0xFF10071F)
+private val BackgroundBottom = Color(0xFF07050D)
+private val CardDark = Color(0xFF171025)
+private val NeonPurple = Color(0xFFB56CFF)
+private val NeonPink = Color(0xFFFF70D6)
+private val MainText = Color(0xFFF8F2FF)
+private val MutedText = Color(0xFFB6A9C9)
+private val CardBorder = Color(0xFF38234F)
 
 @Composable
 fun HomeScreen() = FlorisScreen {
@@ -77,6 +96,13 @@ fun HomeScreen() = FlorisScreen {
         val isSelected by InputMethodUtils
             .observeIsFlorisboardSelected(foregroundOnly = true)
 
+        var showContent by remember { mutableStateOf(false) }
+
+        LaunchedEffect(Unit) {
+            delay(100)
+            showContent = true
+        }
+
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -84,324 +110,365 @@ fun HomeScreen() = FlorisScreen {
                     Brush.verticalGradient(
                         listOf(
                             BackgroundTop,
-                            Color(0xFF0D0A16),
+                            Color(0xFF0C0816),
                             BackgroundBottom
                         )
                     )
                 )
-                .padding(horizontal = 18.dp, vertical = 18.dp),
-            verticalArrangement = Arrangement.spacedBy(18.dp)
+                .padding(horizontal = 16.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(15.dp)
         ) {
-            // Premium SoftBoard header
-            Column(
+            AnimatedVisibility(
+                visible = showContent,
+                enter = fadeIn(tween(700)) +
+                    slideInVertically(
+                        initialOffsetY = { -it / 8 },
+                        animationSpec = tween(
+                            700,
+                            easing = FastOutSlowInEasing
+                        )
+                    )
+            ) {
+                SoftBoardHeader()
+            }
+
+            AnimatedVisibility(
+                visible = showContent,
+                enter = fadeIn(tween(700, delayMillis = 120)) +
+                    slideInVertically(
+                        initialOffsetY = { it / 8 },
+                        animationSpec = tween(
+                            700,
+                            delayMillis = 120,
+                            easing = FastOutSlowInEasing
+                        )
+                    )
+            ) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(15.dp)
+                ) {
+                    if (!isEnabled) {
+                        SoftBoardBanner(
+                            title = "Enable SoftBoard",
+                            subtitle = "Turn on your keyboard",
+                            onClick = {
+                                InputMethodUtils
+                                    .showImeEnablerActivity(context)
+                            }
+                        )
+                    } else if (!isSelected) {
+                        SoftBoardBanner(
+                            title = "Choose SoftBoard",
+                            subtitle = "Set it as your keyboard",
+                            onClick = {
+                                InputMethodUtils.showImePicker(context)
+                            }
+                        )
+                    }
+
+                    Column {
+                        Text(
+                            text = "MAKE IT YOURS",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = NeonPurple,
+                            letterSpacing = 2.sp
+                        )
+                        Spacer(Modifier.size(4.dp))
+                        Text(
+                            text = "Personalize your keyboard",
+                            fontSize = 12.sp,
+                            color = MutedText
+                        )
+                    }
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(11.dp)
+                    ) {
+                        SoftBoardTile(
+                            modifier = Modifier.weight(1f),
+                            icon = Icons.Default.Language,
+                            title = "Languages",
+                            subtitle = "Languages & layouts",
+                            onClick = {
+                                navController.navigate(
+                                    Routes.Settings.Localization
+                                )
+                            }
+                        )
+                        SoftBoardTile(
+                            modifier = Modifier.weight(1f),
+                            icon = Icons.Outlined.Palette,
+                            title = "Appearance",
+                            subtitle = "Themes & colors",
+                            onClick = {
+                                navController.navigate(
+                                    Routes.Settings.Theme
+                                )
+                            }
+                        )
+                    }
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(11.dp)
+                    ) {
+                        SoftBoardTile(
+                            modifier = Modifier.weight(1f),
+                            icon = Icons.Outlined.Keyboard,
+                            title = "Keyboard",
+                            subtitle = "Keys & layout",
+                            onClick = {
+                                navController.navigate(
+                                    Routes.Settings.Keyboard
+                                )
+                            }
+                        )
+                        SoftBoardTile(
+                            modifier = Modifier.weight(1f),
+                            icon = Icons.Default.SmartButton,
+                            title = "Smartbar",
+                            subtitle = "Quick tools",
+                            onClick = {
+                                navController.navigate(
+                                    Routes.Settings.Smartbar
+                                )
+                            }
+                        )
+                    }
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(11.dp)
+                    ) {
+                        SoftBoardTile(
+                            modifier = Modifier.weight(1f),
+                            icon = Icons.Default.Spellcheck,
+                            title = "Typing",
+                            subtitle = "Typing options",
+                            onClick = {
+                                navController.navigate(
+                                    Routes.Settings.Typing
+                                )
+                            }
+                        )
+                        SoftBoardTile(
+                            modifier = Modifier.weight(1f),
+                            icon = Icons.Default.Gesture,
+                            title = "Gestures",
+                            subtitle = "Touch & glide",
+                            onClick = {
+                                navController.navigate(
+                                    Routes.Settings.Gestures
+                                )
+                            }
+                        )
+                    }
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(11.dp)
+                    ) {
+                        SoftBoardTile(
+                            modifier = Modifier.weight(1f),
+                            icon = Icons.AutoMirrored.Outlined.Assignment,
+                            title = "Clipboard",
+                            subtitle = "Copied items",
+                            onClick = {
+                                navController.navigate(
+                                    Routes.Settings.Clipboard
+                                )
+                            }
+                        )
+                        SoftBoardTile(
+                            modifier = Modifier.weight(1f),
+                            icon = Icons.Default.SentimentSatisfiedAlt,
+                            title = "Emoji",
+                            subtitle = "Emoji & media",
+                            onClick = {
+                                navController.navigate(
+                                    Routes.Settings.Media
+                                )
+                            }
+                        )
+                    }
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(11.dp)
+                    ) {
+                        SoftBoardTile(
+                            modifier = Modifier.weight(1f),
+                            icon = Icons.Default.Extension,
+                            title = "Add-ons",
+                            subtitle = "Extra features",
+                            onClick = {
+                                navController.navigate(Routes.Ext.Home)
+                            }
+                        )
+                        SoftBoardTile(
+                            modifier = Modifier.weight(1f),
+                            icon = Icons.Outlined.Build,
+                            title = "More",
+                            subtitle = "Other settings",
+                            onClick = {
+                                navController.navigate(
+                                    Routes.Settings.Other
+                                )
+                            }
+                        )
+                    }
+
+                    SoftBoardTile(
+                        modifier = Modifier.fillMaxWidth(),
+                        icon = Icons.Outlined.Info,
+                        title = "About SoftBoard",
+                        subtitle = "Version and information",
+                        onClick = {
+                            navController.navigate(
+                                Routes.Settings.About
+                            )
+                        }
+                    )
+
+                    Spacer(Modifier.size(8.dp))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SoftBoardHeader() {
+    val transition = rememberInfiniteTransition(
+        label = "softboard_glow"
+    )
+
+    val glow by transition.animateFloat(
+        initialValue = 0.25f,
+        targetValue = 0.75f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(
+                durationMillis = 2200,
+                easing = FastOutSlowInEasing
+            ),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "glow_alpha"
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(27.dp))
+            .background(
+                Brush.linearGradient(
+                    listOf(
+                        Color(0xFF26133C),
+                        Color(0xFF151020),
+                        Color(0xFF25122F)
+                    )
+                )
+            )
+            .border(
+                width = 1.dp,
+                brush = Brush.horizontalGradient(
+                    listOf(
+                        NeonPurple.copy(alpha = glow),
+                        Color(0xFF49305D),
+                        NeonPink.copy(alpha = glow * 0.65f)
+                    )
+                ),
+                shape = RoundedCornerShape(27.dp)
+            )
+            .padding(21.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(28.dp))
+                    .size(59.dp)
+                    .clip(RoundedCornerShape(19.dp))
                     .background(
                         Brush.linearGradient(
                             listOf(
-                                Color(0xFF29203B),
-                                Color(0xFF17111F),
-                                Color(0xFF201328)
+                                Color(0xFFB45AFF),
+                                Color(0xFF6E3CC2)
                             )
                         )
                     )
                     .border(
                         1.dp,
-                        Color(0xFF45334F),
-                        RoundedCornerShape(28.dp)
-                    )
-                    .padding(22.dp)
+                        Color.White.copy(alpha = 0.28f),
+                        RoundedCornerShape(19.dp)
+                    ),
+                contentAlignment = Alignment.Center
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(14.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(58.dp)
-                            .clip(RoundedCornerShape(19.dp))
-                            .background(
-                                Brush.linearGradient(
-                                    listOf(
-                                        AccentPurple,
-                                        Color(0xFF7650B8)
-                                    )
-                                )
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "S",
-                            fontSize = 34.sp,
-                            fontWeight = FontWeight.Black,
-                            color = Color.White
-                        )
-                    }
-
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "SOFTBOARD",
-                            fontSize = 25.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = PrimaryText,
-                            letterSpacing = 1.2.sp
-                        )
-                        Spacer(Modifier.size(3.dp))
-                        Text(
-                            text = "Made by Yashi",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = AccentPink
-                        )
-                    }
-                }
-
-                Spacer(Modifier.size(20.dp))
-
                 Text(
-                    text = "YOUR WORDS. YOUR STYLE.",
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = AccentPurple,
-                    letterSpacing = 1.8.sp
-                )
-
-                Spacer(Modifier.size(7.dp))
-
-                Text(
-                    text = "A keyboard that feels like you.",
-                    fontSize = 15.sp,
-                    color = SecondaryText
-                )
-
-                Spacer(Modifier.size(18.dp))
-
-                Row(
-                    modifier = Modifier
-                        .clip(CircleShape)
-                        .background(Color(0xFF292139))
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(7.dp)
-                            .clip(CircleShape)
-                            .background(
-                                if (isEnabled && isSelected) {
-                                    Color(0xFF79E6B0)
-                                } else {
-                                    AccentPink
-                                }
-                            )
-                    )
-
-                    Text(
-                        text = when {
-                            isEnabled && isSelected -> "KEYBOARD ACTIVE"
-                            isEnabled -> "READY TO SELECT"
-                            else -> "SETUP REQUIRED"
-                        },
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = PrimaryText,
-                        letterSpacing = 1.sp
-                    )
-                }
-            }
-
-            // Keyboard setup
-            if (!isEnabled) {
-                SoftBoardBanner(
-                    title = "Enable SoftBoard",
-                    subtitle = "Turn on your new keyboard",
-                    onClick = {
-                        InputMethodUtils.showImeEnablerActivity(context)
-                    }
-                )
-            } else if (!isSelected) {
-                SoftBoardBanner(
-                    title = "Choose SoftBoard",
-                    subtitle = "Set SoftBoard as your keyboard",
-                    onClick = {
-                        InputMethodUtils.showImePicker(context)
-                    }
+                    text = "S",
+                    fontSize = 35.sp,
+                    fontWeight = FontWeight.Black,
+                    color = Color.White
                 )
             }
 
-            // Settings section heading
-            Row(
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "SOFTBOARD",
+                    fontSize = 23.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = MainText,
+                    letterSpacing = 1.sp
+                )
+                Spacer(Modifier.size(4.dp))
+                Text(
+                    text = "Made by Yashi",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = NeonPink
+                )
+            }
+        }
+
+        Spacer(Modifier.size(20.dp))
+
+        Text(
+            text = "YOUR WORDS. YOUR STYLE.",
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 1.8.sp,
+            color = NeonPurple
+        )
+
+        Spacer(Modifier.size(7.dp))
+
+        Text(
+            text = "Express yourself with every tap.",
+            fontSize = 14.sp,
+            color = MutedText
+        )
+
+        Spacer(Modifier.size(17.dp))
+
+        Row(
+            modifier = Modifier
+                .clip(CircleShape)
+                .background(Color(0xFF30213D))
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 2.dp, bottom = 1.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "MAKE IT YOURS",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = PrimaryText,
-                        letterSpacing = 1.5.sp
-                    )
-                    Spacer(Modifier.size(4.dp))
-                    Text(
-                        text = "Personalize your experience",
-                        fontSize = 12.sp,
-                        color = SecondaryText
-                    )
-                }
-
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(Color(0xFF21182F))
-                        .padding(horizontal = 11.dp, vertical = 8.dp)
-                ) {
-                    Text(
-                        text = "SETTINGS",
-                        fontSize = 9.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = AccentPurple,
-                        letterSpacing = 1.sp
-                    )
-                }
-            }
-
-            // Languages and theme
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                SoftBoardTile(
-                    modifier = Modifier.weight(1f),
-                    icon = Icons.Default.Language,
-                    title = "Languages",
-                    subtitle = "Language & layouts",
-                    onClick = {
-                        navController.navigate(Routes.Settings.Localization)
-                    }
-                )
-                SoftBoardTile(
-                    modifier = Modifier.weight(1f),
-                    icon = Icons.Outlined.Palette,
-                    title = "Appearance",
-                    subtitle = "Themes & colors",
-                    onClick = {
-                        navController.navigate(Routes.Settings.Theme)
-                    }
-                )
-            }
-
-            // Keyboard and smartbar
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                SoftBoardTile(
-                    modifier = Modifier.weight(1f),
-                    icon = Icons.Outlined.Keyboard,
-                    title = "Keyboard",
-                    subtitle = "Keys & layout",
-                    onClick = {
-                        navController.navigate(Routes.Settings.Keyboard)
-                    }
-                )
-                SoftBoardTile(
-                    modifier = Modifier.weight(1f),
-                    icon = Icons.Default.SmartButton,
-                    title = "Smartbar",
-                    subtitle = "Quick tools",
-                    onClick = {
-                        navController.navigate(Routes.Settings.Smartbar)
-                    }
-                )
-            }
-
-            // Typing and gestures
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                SoftBoardTile(
-                    modifier = Modifier.weight(1f),
-                    icon = Icons.Default.Spellcheck,
-                    title = "Typing",
-                    subtitle = "Typing options",
-                    onClick = {
-                        navController.navigate(Routes.Settings.Typing)
-                    }
-                )
-                SoftBoardTile(
-                    modifier = Modifier.weight(1f),
-                    icon = Icons.Default.Gesture,
-                    title = "Gestures",
-                    subtitle = "Touch & glide",
-                    onClick = {
-                        navController.navigate(Routes.Settings.Gestures)
-                    }
-                )
-            }
-
-            // Clipboard and emoji
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                SoftBoardTile(
-                    modifier = Modifier.weight(1f),
-                    icon = Icons.AutoMirrored.Outlined.Assignment,
-                    title = "Clipboard",
-                    subtitle = "Copied items",
-                    onClick = {
-                        navController.navigate(Routes.Settings.Clipboard)
-                    }
-                )
-                SoftBoardTile(
-                    modifier = Modifier.weight(1f),
-                    icon = Icons.Default.SentimentSatisfiedAlt,
-                    title = "Emoji",
-                    subtitle = "Emoji & media",
-                    onClick = {
-                        navController.navigate(Routes.Settings.Media)
-                    }
-                )
-            }
-
-            // Add-ons and other settings
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                SoftBoardTile(
-                    modifier = Modifier.weight(1f),
-                    icon = Icons.Default.Extension,
-                    title = "Add-ons",
-                    subtitle = "Extra features",
-                    onClick = {
-                        navController.navigate(Routes.Ext.Home)
-                    }
-                )
-                SoftBoardTile(
-                    modifier = Modifier.weight(1f),
-                    icon = Icons.Outlined.Build,
-                    title = "More",
-                    subtitle = "Other settings",
-                    onClick = {
-                        navController.navigate(Routes.Settings.Other)
-                    }
-                )
-            }
-
-            // About
-            SoftBoardTile(
-                modifier = Modifier.fillMaxWidth(),
-                icon = Icons.Outlined.Info,
-                title = "About SoftBoard",
-                subtitle = "Version and information",
-                onClick = {
-                    navController.navigate(Routes.Settings.About)
-                }
+                    .size(7.dp)
+                    .clip(CircleShape)
+                    .background(NeonPink)
             )
-
-            Spacer(Modifier.size(6.dp))
+            Text(
+                text = "GAMING STYLE • MADE FOR YOU",
+                fontSize = 9.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 0.8.sp,
+                color = MainText
+            )
         }
     }
 }
@@ -412,32 +479,52 @@ private fun SoftBoardBanner(
     subtitle: String,
     onClick: () -> Unit
 ) {
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+
+    val scale by animateFloatAsState(
+        targetValue = if (pressed) 0.975f else 1f,
+        animationSpec = spring(
+            dampingRatio = 0.65f,
+            stiffness = 500f
+        ),
+        label = "setup_press"
+    )
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
             .clip(RoundedCornerShape(20.dp))
-            .background(Color(0xFF21182D))
+            .background(Color(0xFF21162F))
             .border(
                 1.dp,
-                Color(0xFF75508A),
+                NeonPurple.copy(alpha = 0.65f),
                 RoundedCornerShape(20.dp)
             )
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 17.dp),
+            .clickable(
+                interactionSource = interaction,
+                indication = null,
+                onClick = onClick
+            )
+            .padding(15.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
             modifier = Modifier
-                .size(44.dp)
+                .size(45.dp)
                 .clip(RoundedCornerShape(15.dp))
-                .background(Color(0xFF38254B)),
+                .background(Color(0xFF3A2451)),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = "S",
                 fontSize = 25.sp,
                 fontWeight = FontWeight.ExtraBold,
-                color = AccentPink
+                color = NeonPink
             )
         }
 
@@ -448,23 +535,22 @@ private fun SoftBoardBanner(
         ) {
             Text(
                 text = title,
-                color = PrimaryText,
+                fontSize = 15.sp,
                 fontWeight = FontWeight.Bold,
-                fontSize = 15.sp
+                color = MainText
             )
             Spacer(Modifier.size(4.dp))
             Text(
                 text = subtitle,
-                color = SecondaryText,
-                fontSize = 12.sp
+                fontSize = 12.sp,
+                color = MutedText
             )
         }
 
         Text(
             text = "›",
-            color = AccentPurple,
             fontSize = 28.sp,
-            fontWeight = FontWeight.Medium
+            color = NeonPurple
         )
     }
 }
@@ -478,48 +564,80 @@ private fun SoftBoardTile(
     onClick: () -> Unit
 ) {
     val shape = RoundedCornerShape(21.dp)
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+
+    val scale by animateFloatAsState(
+        targetValue = if (pressed) 0.965f else 1f,
+        animationSpec = spring(
+            dampingRatio = 0.65f,
+            stiffness = 500f
+        ),
+        label = "tile_press"
+    )
 
     Column(
         modifier = modifier
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
             .clip(shape)
             .background(
                 Brush.linearGradient(
                     listOf(
-                        Color(0xFF1B1626),
-                        CardBackground
+                        Color(0xFF20162D),
+                        CardDark,
+                        Color(0xFF130F1D)
                     )
                 )
             )
             .border(
                 1.dp,
-                SubtleBorder,
+                CardBorder,
                 shape
             )
-            .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 16.dp)
+            .clickable(
+                interactionSource = interaction,
+                indication = null,
+                onClick = onClick
+            )
+            .padding(horizontal = 13.dp, vertical = 15.dp)
     ) {
         Box(
             modifier = Modifier
                 .size(43.dp)
-                .clip(RoundedCornerShape(15.dp))
-                .background(Color(0xFF302341)),
+                .clip(RoundedCornerShape(14.dp))
+                .background(
+                    Brush.linearGradient(
+                        listOf(
+                            Color(0xFF493063),
+                            Color(0xFF2D2040)
+                        )
+                    )
+                )
+                .border(
+                    1.dp,
+                    NeonPurple.copy(alpha = 0.22f),
+                    RoundedCornerShape(14.dp)
+                ),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = title,
-                tint = AccentPurple,
+                tint = NeonPurple,
                 modifier = Modifier.size(23.dp)
             )
         }
 
-        Spacer(Modifier.size(14.dp))
+        Spacer(Modifier.size(13.dp))
 
         Text(
             text = title,
             fontSize = 14.sp,
             fontWeight = FontWeight.Bold,
-            color = PrimaryText
+            color = MainText
         )
 
         Spacer(Modifier.size(5.dp))
@@ -527,7 +645,7 @@ private fun SoftBoardTile(
         Text(
             text = subtitle,
             fontSize = 11.sp,
-            color = SecondaryText,
+            color = MutedText,
             lineHeight = 15.sp
         )
 
